@@ -1,6 +1,11 @@
 const mongoose = require('mongoose');
 
 const usuarioSchema = new mongoose.Schema({
+        nombres_apellidos: { 
+        type: String, 
+        required: true, 
+        unique: true 
+    },
     usuario: { 
         type: String, 
         required: true, 
@@ -10,15 +15,13 @@ const usuarioSchema = new mongoose.Schema({
         type: String, 
         required: true 
     },
-    // Definición de roles autorizados
     rol: {
-        type: String,
-        enum: ['ADMIN', 'GESTOR', 'RADICADOR', 'FUNCIONARIO'],
-        default: 'FUNCIONARIO'
+        type: String, 
+        required: true 
     }, 
-    
     dependencia: { 
-        type: String 
+        type: String,
+        required: true 
     } 
     
 }, { timestamps: true });
