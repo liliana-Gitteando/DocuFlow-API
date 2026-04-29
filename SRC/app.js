@@ -1,7 +1,7 @@
 
 // FIX DNS (evita errores de conexión con MongoDB Atlas)
 const dns = require('node:dns/promises');
-dns.setServers(['1.1.1.1', '8.8.8.8']); // Cloudflare + Google DNS
+dns.setServers(['1.1.1.1', '8.8.8.8']); 
 
 // Cargar variables de entorno (.env)
 require('dotenv').config();
@@ -9,6 +9,7 @@ require('dotenv').config();
 // IMPORTACIÓN DE DEPENDENCIAS
 const express = require('express');
 const cors = require('cors');
+const radicadoRoutes = require('./routes/radicadoRoutes');
 
 // Archivo de conexión a la base de datos
 const conectarDB = require('./config/db');
@@ -24,11 +25,12 @@ conectarDB();
 
 // MIDDLEWARES
 
-// Permite recibir datos en formato JSON
-app.use(express.json());
-
 // Permite solicitudes desde otros dominios (CORS)
 app.use(cors());
+// Permite recibir datos en formato JSON
+app.use(express.json());
+// Definición de Rutas (El circuito de Docuflow)
+app.use('/api/radicados', radicadoRoutes);
 
 // RUTAS 
 

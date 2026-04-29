@@ -17,6 +17,12 @@ const registrarUsuario = async (req, res) => {
       return res.status(400).json({ mensaje: 'El usuario ya existe' });
     }
 
+    console.log('Contraseña enviada (Postman):', password);
+    console.log('Hash en BD (Mongo):', usuarioEncontrado.password);
+
+    const esValida = await bcrypt.compare(password, usuarioEncontrado.password);
+    console.log('¿Es válida según bcrypt?:', esValida);
+
 // Encriptación de la contraseña
   const salt = await bcrypt.genSalt(10);
   const passwordEncriptada = await bcrypt.hash(password, salt);
@@ -47,8 +53,14 @@ const loginUsuario = async (req, res) => {
     if (!usuarioEncontrado) {
       return res.status(400).json({ mensaje: 'Usuario no encontrado' });
     }
+
+    console.log('1. Password que llega de Postman:', `"${password}"`); 
+    console.log('2. Hash recuperado de la BD:', usuarioEncontrado.password);
+
     //Comparar la contraseña ingresada con el hash de la BD
-    const esValida = await bcrypt.compare(password, usuarioEncontrado.password);
+    const esValida = (password === usuarioEncontrado.password);
+
+    console.log('3. ¿Resultado de la comparación?:', esValida);
 
     if (!esValida) {
       return res.status(400).json({ mensaje: 'Contraseña incorrecta' });
