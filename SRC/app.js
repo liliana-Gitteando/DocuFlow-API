@@ -36,7 +36,7 @@ app.use(cors());
 const authRoutes = require('./routes/authRoutes');
 
 // Prefijo /api para todas las rutas
-app.use('/api', authRoutes);
+app.use('/api/auth', authRoutes);
 
 // Ruta de prueba
 app.get('/', (req, res) => {

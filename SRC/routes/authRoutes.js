@@ -1,9 +1,11 @@
 const express = require('express');
-const router = express.Router();
+const router = express.Router(); // 
+// IMPORTACIÓN 
+const authController = require('../controllers/authController');
 
-const { registrar, login } = require('../controllers/authController');
-
-router.post('/registro', registrar);
-router.post('/login', login);
+// RUTAS
+// Usamos el punto (.) para acceder a las funciones del objeto importado
+router.post('/registro', authController.registrarUsuario);
+router.post('/login', authController.loginUsuario);
 
 module.exports = router;
