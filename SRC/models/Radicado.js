@@ -1,81 +1,70 @@
-const Radicado = require('../models/Radicado');
-const Usuario = require('../models/Usuario');
-const Contador = require('../models/Contador');
+const mongoose = require('mongoose');
 
-// Función interna para el consecutivo
-const generarConsecutivo = async () => {
-    const contador = await Contador.findOneAndUpdate(
-        { id: 'radicadoId' },
-        { $inc: { seq: 1 } },
-        { new: true, upsert: true }
-    );
-    return contador.seq;
-};
+const RadicadoSchema = new mongoose.Schema({
+    // INFORMACIÓN BÁSICA DEL REGISTRO 
+    numero: { 
+        type: String, 
+        required: true, 
+        unique: true 
+    }, // Ejemplo: RAD-E-300-29/04/2026-0000001
+    asunto: { 
+        type: String, 
+        required: true 
+    },
+    remitente: { 
+        type: String, 
+        required: true 
+    },
+    tipo: { 
+        type: String, 
+        enum: ['E', 'S', 'I'], 
+        required: true 
+    }, // Entrada, Salida, Interno
+    fecha: { 
+        type: Date, 
+        default: Date.now 
+    },
 
-const crearRadicado = async (req, res) => {
-    try {
-        // 1. Extraemos los datos del formulario
-        const { asunto, remitente, tipo, destinatarioId } = req.body;
+    // CLASIFICACIÓN TÉCNICA SEGÚN TRD 
+    vencimiento: { 
+        type: Date 
+    }, // Aquí se guardan los 15 días hábiles para PQRS 
+    serie: { 
+        type: String 
+    }, // Código de la Serie Documental 
+    subserie: { 
+        type: String 
+    }, // Código de la Subserie 
+    tipoDocumental: { 
+        type: String 
+    }, // Ej: "PQRS", "Acta", "Contrato" 
+    anexos: { 
+        type: String 
+    }, // Descripción: USB, CD, 2 Carpetas, etc. 
 
-        // 2. Validaciones iniciales
-        if (!['E', 'S', 'I'].includes(tipo)) {
-            return res.status(400).json({ error: 'Tipo de radicado no válido' });
-        }
+    // TRAZABILIDAD: QUIÉN RADICA 
+    radicador: { 
+        type: mongoose.Schema.Types.ObjectId, 
+        ref: 'Usuario' 
+    },
+    nombreRadicador: { 
+        type: String 
+    },
+    areaRadicador: { 
+        type: String 
+    },
 
-        // 3. Obtener datos del DESTINATARIO (Desde la lista de usuarios)
-        const usuarioDestino = await Usuario.findById(destinatarioId);
-        if (!usuarioDestino) {
-            return res.status(404).json({ error: 'El destinatario seleccionado no existe en la base de datos.' });
-        }
-
-        // 4. Obtener datos del RADICADOR (El usuario que tiene la sesión iniciada)
-        // Nota: req.usuario.id debe ser provisto por tu middleware de autenticación
-        const usuarioRadicador = await Usuario.findById(req.usuario.id);
-        if (!usuarioRadicador) {
-            return res.status(401).json({ error: 'No se pudo identificar al usuario que radica.' });
-        }
-
-        // 5. Generar el número de radicado único
-        const consecutivo = await generarConsecutivo();
-        const consecutivoStr = String(consecutivo).padStart(7, '0');
-        const fechaActual = new Date();
-        const numeroRadicado = `RAD-${tipo}-${fechaActual.getFullYear()}-${consecutivoStr}`;
-
-        // 6. Crear el nuevo documento con toda la trazabilidad
-        const nuevoRadicado = new Radicado({
-            numero: numeroRadicado,
-            asunto,
-            remitente,
-            tipo,
-            fecha: fechaActual,
-            
-            // Datos del Radicador (Automáticos)
-            radicador: usuarioRadicador._id,
-            nombreRadicador: usuarioRadicador.nombres_apellidos,
-            areaRadicador: usuarioRadicador.dependencia, // Ejemplo: "Correspondencia"
-            
-            // Datos del Destinatario (Automáticos)
-            destinatario: usuarioDestino._id,
-            nombreDestinatario: usuarioDestino.nombres_apellidos,
-            areaDestino: usuarioDestino.dependencia // Ejemplo: "Archivo", "Sistemas", etc.
-        });
-
-        // 7. Guardar en MongoDB
-        await nuevoRadicado.save();
-
-        res.status(201).json({
-            mensaje: 'Radicado creado exitosamente',
-            datos: {
-                numero: nuevoRadicado.numero,
-                destino: nuevoRadicado.nombreDestinatario,
-                area: nuevoRadicado.areaDestino
-            }
-        });
-
-    } catch (error) {
-        console.error('Error en radicación:', error);
-        res.status(500).json({ error: 'Error interno al procesar el radicado.' });
+    // TRAZABILIDAD: QUIÉN RECIBE 
+    destinatario: { 
+        type: mongoose.Schema.Types.ObjectId, 
+        ref: 'Usuario' 
+    },
+    nombreDestinatario: { 
+        type: String 
+    },
+    areaDestino: { 
+        type: String 
     }
-};
+});
 
-module.exports = { crearRadicado };
+module.exports = mongoose.model('Radicado', RadicadoSchema);
